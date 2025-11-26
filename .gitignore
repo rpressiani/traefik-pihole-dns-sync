@@ -1,0 +1,21 @@
+# Sensitive files - never commit
+.env
+*.log
+
+# Build artifacts
+sync
+test-api
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+notes/
+
