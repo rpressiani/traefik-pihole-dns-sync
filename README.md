@@ -90,13 +90,13 @@ docker run -d \
 Before making actual changes:
 
 ```bash
-docker run --rm --env-file .env ghcr.io/rpressiani/traefik-pihole-dns-sync:latest /app/sync --dry-run
+docker run --rm --env-file .env ghcr.io/rpressiani/traefik-pihole-dns-sync:latest --dry-run
 ```
 
 Or run once without scheduling:
 
 ```bash
-docker run --rm --env-file .env ghcr.io/rpressiani/traefik-pihole-dns-sync:latest /app/sync --once
+docker run --rm --env-file .env ghcr.io/rpressiani/traefik-pihole-dns-sync:latest --once
 ```
 
 ## Testing Tools
@@ -116,11 +116,12 @@ go build -o test-api test-api.go
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `TRAEFIK_API_URL` | `http://traefik:8080/api/http/routers` | Traefik API endpoint |
-| `PIHOLE_URL` | `https://pihole.example.com` | Pi-hole web interface URL |
+| `PIHOLE_URL` | (required) | Pi-hole web interface URL |
 | `PIHOLE_PASSWORD` | (required) | Pi-hole admin password |
 | `TRAEFIK_HOST_IP` | (required) | IP address for DNS A records |
 | `SYNC_INTERVAL` | `@every 5m` | Sync frequency (cron or @every) |
 | `LOG_LEVEL` | `info` | Log verbosity: `info` or `debug` |
+| `RUN_MODE` | (empty) | Run mode: `dry-run`, `once`, `scheduled-dry-run`, or empty for scheduled |
 
 ### Cron Interval Syntax
 
@@ -144,12 +145,6 @@ View logs:
 docker compose logs -f traefik-pihole-dns-sync
 ```
 
-Check sync status:
-
-```bash
-docker compose exec traefik-pihole-dns-sync /app/sync --once --dry-run
-```
-
 ## Development
 
 To build and test changes locally without pushing to GitHub:
@@ -160,19 +155,36 @@ To build and test changes locally without pushing to GitHub:
    docker compose up -d --build
    ```
 
-### Testing with Flags
+### Testing with RUN_MODE Environment Variable
 
-To test with `--dry-run` or `--once` flags:
+You can now control run modes via environment variables in `docker-compose.yml`:
+
+```yaml
+environment:
+  - RUN_MODE=dry-run            # Run once in dry-run mode
+  # - RUN_MODE=once             # Run once with actual changes
+  # - RUN_MODE=scheduled-dry-run # Run on schedule in dry-run mode (monitoring)
+  # Leave RUN_MODE empty or unset for normal scheduled sync
+```
+
+Then simply:
+```bash
+docker compose up
+```
+
+### Testing with Command-Line Flags
+
+Alternatively, use command-line flags (these take precedence over `RUN_MODE`):
 
 ```bash
 # Build the image
 docker compose build
 
 # Run once with dry-run (no changes made)
-docker compose run --rm traefik-pihole-dns-sync /app/sync --dry-run --once
+docker compose run --rm traefik-pihole-dns-sync --dry-run --once
 
 # Run once (makes actual changes)
-docker compose run --rm traefik-pihole-dns-sync /app/sync --once
+docker compose run --rm traefik-pihole-dns-sync --once
 ```
 
 ## Troubleshooting
@@ -202,7 +214,6 @@ docker compose run --rm traefik-pihole-dns-sync /app/sync --once
 
 ## TODO
 
-- [ ] Add environment variables for run modes (e.g., `RUN_MODE=dry-run` or `RUN_MODE=once`)
 - [ ] Add support for removing stale DNS records
 - [ ] Add Prometheus metrics
 - [ ] Support for CNAME records instead of A records

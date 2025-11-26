@@ -24,6 +24,7 @@ type Config struct {
 	TraefikHostIP  string
 	SyncInterval   string
 	LogLevel       string
+	RunMode        string // "dry-run", "once", or "" for scheduled
 	DryRun         bool
 }
 
@@ -56,7 +57,22 @@ func main() {
 
 	// Load configuration
 	config := loadConfig()
-	config.DryRun = *dryRun
+
+	// Apply RUN_MODE environment variable first
+	switch config.RunMode {
+	case "dry-run":
+		config.DryRun = true
+		*once = true
+	case "once":
+		*once = true
+	case "scheduled-dry-run":
+		config.DryRun = true
+	}
+
+	// Command-line flags override environment variables
+	if *dryRun {
+		config.DryRun = true
+	}
 
 	if config.DryRun {
 		log.Println("🔍 Running in DRY-RUN mode - no changes will be made")
@@ -68,7 +84,7 @@ func main() {
 		log.Printf("❌ Sync failed: %v", err)
 	}
 
-	// If --once flag is set, exit after first sync
+	// If --once flag is set or RUN_MODE is once/dry-run, exit after first sync
 	if *once {
 		log.Println("✅ One-time sync completed")
 		return

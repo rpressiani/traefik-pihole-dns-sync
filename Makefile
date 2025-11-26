@@ -25,7 +25,7 @@ docker-logs: ## Show Docker container logs
 	docker-compose logs -f
 
 docker-test: ## Run Docker container in test mode (dry-run, once)
-	docker-compose run --rm traefik-pihole-dns-sync /app/sync --dry-run --once
+	docker-compose run --rm traefik-pihole-dns-sync --dry-run --once
 
 docker-rebuild: ## Rebuild and restart Docker container
 	docker-compose down
